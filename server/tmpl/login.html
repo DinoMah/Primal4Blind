@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html >
+  <head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+		<script type="text/javascript" src="../tmpl/js/articulate.min.js"></script>
+		<script type="text/javascript" src="../tmpl/js/articulate.min.js"></script>
+		<script type="text/javascript">
+			function speak(obj) {
+			  $(obj).articulate("speak");
+			}
+		  
+			function pause() {
+			  $().articulate("pause");
+			}
+		  
+			function resume() {
+			  $().articulate("resume");
+			}
+		  
+			function stop() {
+			  $().articulate("stop");
+			}
+		  </script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Dashboard">
+    <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
+
+    <title> 4Blind - Game for Blinds </title>
+    <link rel="icon" type="image/png" href="../assets/img/eye4b.png">
+    <!-- Bootstrap core CSS -->
+    <link href="../assets/css/bootstrap.css" rel="stylesheet">
+    <!--external css-->
+    <link href="../assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
+        
+    <!-- Custom styles for this template -->
+    <link href="../assets/css/style.css" rel="stylesheet">
+    <link href="../assets/css/style-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+  </head>
+
+  <body>
+
+      <!-- **********************************************************************************************************************************************************
+      MAIN CONTENT
+      *********************************************************************************************************************************************************** -->
+
+	  <div id="login-page">
+	  	<div class="container">
+	  	
+		      <form name="logg" class="form-login"  action="/logged/" method="POST">
+		        <h2 class="form-login-heading">
+					<img src="../assets/img/4blind.png" style="height: 168px;">
+					<br><br>
+                    <b>Inicio de Sesion</b>
+				</h2>
+				<a  class="btn btn-theme btn-block" href="/register/">Registrarse</a>
+		        <div class="login-wrap">
+		            <b>Correo</b> <input onfocusout="checkEmail(document.logg.emmail)" onclick="checkEmail(document.logg.emmail)" id="email" type="text" class="form-control" placeholder="Usuario" name="email">
+		            <br><p id="wrong" style="color: red"></p>
+		            <b>Contrasena</b> <input name="pass" type="password" class="form-control" placeholder="Password">
+		            <br>
+					<button  class="btn btn-theme btn-block" type="submit"><i class="fa fa-lock"></i> <b>Aceptar</b></button>
+		            <hr>
+		           
+				</div>
+		      </form>	  	
+
+	  	</div>
+	  </div>
+
+    <!-- js placed at the end of the document so the pages load faster -->
+    <script src="../assets/js/bootstrap.min.js"></script>
+
+    <!--BACKSTRETCH-->
+    <!-- You can use an image of whatever size. This script will stretch to fit in any screen size.-->
+    <script type="text/javascript" src="../assets/js/jquery.backstretch.min.js"></script>
+    <script>
+        $.backstretch("../assets/img/maze.jpg", {speed: 500});		
+	</script>
+
+	<script type="text/javascript">
+		$(document).ready(function () {
+		
+			$("li,button,b,p,input.form-control,a").hover(function(){
+  
+				speak(this);
+				}, function(){
+			
+			});
+  
+		});
+	</script>
+
+	<script>
+
+		function checkEmail(inputtext) 
+		{	
+			var $email = document.getElementById("email").value;
+			var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+			//alert("Valid email address!");
+			if (inputtext.value.match(mailformat))
+			{
+				document.getElementById('wrong').style.color = "green";
+				document.getElementById('wrong').innerHTML = "Email valido";
+				
+			}else{
+				document.getElementById('wrong').style.color = "red";
+				document.getElementById('wrong').innerHTML = "hay algo malo en el email";
+				
+			}
+		}
+	</script>
+
+
+  </body>
+</html>

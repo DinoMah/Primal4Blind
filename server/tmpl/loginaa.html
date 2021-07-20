@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="../tmpl/dashgum/Theme/assets/css/style.css">
+        <link rel="shortcut icon" type="image/png" href="../data/img/logo4Blind.png"/>
+    </head>
+    <body>
+        <h1>Bienvenido</h1>
+        <!--Aquí para mandar la información en action se pone la ruta /logged/ la cual llamará a la función getLogin en el 
+        backend ;) -->
+        <form action="/logged/" method="POST">
+            <div>
+                <p>Usuario: </p><input type="text" name="usuario">
+                <p>Contraseña: </p><input type="password" name="password">
+            </div>
+            <div>
+                <input type="submit" value="Iniciar Sesión">
+            </div>
+        </form>
+    </body>
+</html>

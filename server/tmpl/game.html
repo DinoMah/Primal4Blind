@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>GAME!</title>
+  <link rel="stylesheet" href="../tmpl/dashgum/Theme/assets/css/style.css">
+  <link rel="shortcut icon" type="image/png" href="../data/img/logo4Blind.png"/>
+</head>
+<body>
+    <script src="../tmpl/pixi/pixi.min.js"></script>
+    <script src="../tmpl/pixi/makeMaze2.js"></script>
+    <script src="../tmpl/pixi/bump.js"></script>
+    <script src="../tmpl/pixi/gameFunctions.js"></script>
+    <script src="../tmpl/pixi/pixi-viewport.js"></script>
+    <script type="text/javascript">
+        var gamepadAPI = {
+            controller: {},
+            turbo: false,
+            connect: function(evt) {
+                gamepadAPI.controller = evt.gamepad;
+                gamepadAPI.turbo = true;
+                console.log("Gamepad connected :D");
+            },
+            disconnect: function(evt) {
+                gamepadAPI.turbo = false;
+                delete gamepadAPI.controller;
+                console.log("Gamepad disconnected :C");
+            },
+            update: function() {
+                gamepadAPI.buttonsCache = [];
+                for(var k = 0; k < gamepadAPI.buttonsStatus.length; k++)
+                {
+                    gamepadAPI.buttonsCache[k] = gamepadAPI.buttonsStatus[k];
+                }
+                gamepadAPI.buttonsStatus = [];
+                var c = gamepadAPI.controller || {};
+                var pressed = [];
+                if(c.buttons)
+                {
+                    for(var b = 0, t = c.buttons.length; b < t; b++)
+                    {
+                        if(c.buttons[b].pressed)
+                        {
+                            pressed.push(gamepadAPI.buttons[b]);
+                        }
+                    }
+                }
+                var axes = [];
+                if(c.axes)
+                {
+                    for(var a = 0, x = c.axes.length; a < x; a++ )
+                    {
+                        axes.push(c.axes[a].toFixed(2));
+                    }
+                }
+                gamepadAPI.axesStatus = axes;   
+                gamepadAPI.buttonsStatus = pressed;
+                return pressed;
+            },
+            buttonPressed: function(button, hold) {
+                var newPress = false;
+                for(var i = 0, s = gamepadAPI.buttonsStatus.length; i < s; i++)
+                {
+                    if(gamepadAPI.buttonsStatus[i] == button)
+                    {
+                        newPress = true;
+                        if(!hold)
+                        {
+                            for(var j = 0, p = gamepadAPI.buttonsCache.length; j < p; j++)
+                            {
+                                if(gamepadAPI.buttonsCache[j] == button)
+                                {
+                                    newPress = false;
+                                }
+                            }
+                        }
+                    }
+                }
+                return newPress;
+            },
+            buttons: [
+                'DPad-Up', 'DPad-Down', 'DPad-Left', 'DPad-Right',
+                'Start', 'Back', 'Axis-Left', 'Axis-Right',
+                'LB', 'RB', 'Power', 'A', 'B', 'X', 'Y'
+            ],
+            buttonsCache: [],
+            buttonsStatus: [],
+            axesStatus: []
+        };
+        window.addEventListener("gamepadconnected", gamepadAPI.connect);
+        window.addEventListener("gamepaddisconnected", gamepadAPI.disconnect);
+
+        let app = new PIXI.Application({
+            width: 608, 
+            height: 608,
+            resolution: 1,
+            forceCanvas: true
+        });
+        document.body.appendChild(app.view);
+        points = makeMaze(1, 1);
+        //----------------------------------- Viewport for pixi -------------------------------------------------
+        var viewport = new PIXI.extras.Viewport({
+            screenWidth: window.innerWidth,
+            screenHeight: window.innerHeight,
+            worldWidth: 608,
+            worldHeight: 608,
+            interaction: app.renderer.plugins.interaction
+        });
+        // ------------------------------------- end pixi viewport -------------------------------------------------
+        PIXI.loader //Cambiar el tamaño de imagen y la imagen con un nombre apropiado
+            .add("../data/img/Stone.png")
+            .add("../data/img/BlueDC.png")
+            .add("../data/img/player132x32.png")
+            .add("../data/img/Exit.png")
+            .load(setup);
+        var playerSprite, state, rectangles = [], exitRects = [], currentFrame = 0, bump = new Bump(PIXI), exitSprite;
+        var lastMove, currentExitFrame = 1;
+
+        function setup() {
+            app.stage.addChild(viewport);
+            let texture = PIXI.loader.resources["../data/img/player132x32.png"].texture;
+            for(var i = 0; i < 4; i++)
+            {
+                for(var j = 0; j < 9; j++)
+                {
+                    rectangles.push(new PIXI.Rectangle(j*32, i*32, 32, 32)); //Poner esto 64x64
+                }
+            }
+            texture.frame = rectangles[18];
+            for(var i = 0; i < 10; i++)
+            {
+                exitRects.push(new PIXI.Rectangle(0, i*32, 32, 32)); //Igual esto
+            }
+            playerSprite = new PIXI.Sprite.from(texture);
+            playerSprite.vx = 0;
+            playerSprite.vy = 0;
+            playerSprite.height = 20;
+            playerSprite.width = 16;
+            generateMap();
+            viewport.addChild(playerSprite);
+            let absPos = new PIXI.Point(playerSprite.x - 40, playerSprite.y - 40);
+            viewport.pivot = absPos;
+            //viewport.follow(playerSprite);
+            viewport.zoomPercent(4.5);
+            state = play;
+            app.ticker.add(delta => gameLoop(delta));
+            //To remove a child from the scene do -> app.stage.removeChild(child2Remove) or child2Remove.visible = false
+            
+        }
+
+        function gameLoop(delta)
+        {
+            //console.log(gamepadAPI.update());
+            //boton palanca izquierda "power"
+            //boton palanca derecha "A"
+            gamepadAPI.update();
+            state(delta);
+        }
+
+        function play(delta)
+        {
+            if(gamepadAPI.turbo)
+            {
+                let absPos = new PIXI.Point(playerSprite.x - 40, playerSprite.y - 40);
+                viewport.pivot = absPos;
+                viewport.children.forEach(function(element){
+                    if(element.name == "stone")
+                    {
+                        if(bump.hit(playerSprite, element))
+                        {
+                            switch(lastMove)
+                            {
+                                case "left":
+                                    playerSprite.x += 2 + delta;
+                                    break;
+                                case "right":
+                                    playerSprite.x -= 2 + delta;
+                                    break;
+                                case "up":
+                                    playerSprite.y += 2 + delta;
+                                    break;
+                                case "down":
+                                    playerSprite.y -= 2 + delta;
+                                    break;
+                            }
+                        }
+                    }
+                    else if(element.name == "exit")
+                    {
+                        if(bump.hit(playerSprite, element))
+                        {
+                            exitSprite.texture.frame = exitRects[currentExitFrame++];
+                            if(currentExitFrame == exitRects.length)
+                                currentExitFrame -= 1;
+                        }
+                    }
+                });
+                if(gamepadAPI.axesStatus[0] > 0.5)
+                {
+                    if(currentFrame < 27)
+                        currentFrame = 27;
+                    if(currentFrame == 35 )
+                        currentFrame = 27;
+                    playerSprite.texture.frame = rectangles[currentFrame++];
+                    playerSprite.x += 2 + delta;
+                    lastMove = "right";
+                }
+                else if(gamepadAPI.axesStatus[0] < -0.5)
+                {
+                    if(currentFrame < 9 || currentFrame > 17)
+                        currentFrame = 9;
+                    if(currentFrame == 17 )
+                        currentFrame = 9;
+                    playerSprite.texture.frame = rectangles[currentFrame++];
+                    playerSprite.x -= 2 + delta;
+                    lastMove = "left";
+                }
+                else if(gamepadAPI.axesStatus[1] > 0.5)
+                {
+                    if(currentFrame < 18 || currentFrame > 26)
+                        currentFrame = 18;
+                    if(currentFrame == 26)
+                        currentFrame = 18;
+                    playerSprite.texture.frame = rectangles[currentFrame++];
+                    playerSprite.y += 2 + delta;
+                    lastMove = "down";
+                }
+                else if(gamepadAPI.axesStatus[1] < -0.5)
+                {
+                    if(currentFrame > 8)
+                        currentFrame = 0;
+                    if(currentFrame == 8)
+                        currentFrame = 0;
+                    playerSprite.texture.frame = rectangles[currentFrame++];
+                    playerSprite.y -= 2 + delta;
+                    lastMove = "up";
+                }
+            }
+        }
+
+        function generateMap()
+        {
+            for(var i = 0; i < (608/32); i++) {
+                for(var j = 0; j < (608/32); j++) {
+                    if( !findPoint(new Punto(i, j), points) )
+                    {
+                        var sprite = new PIXI.Sprite.fromImage("../data/img/Stone.png");
+                        sprite.position.x = i * 32; //cambiar por 64
+                        sprite.position.y = j * 32; //cambiar por 64
+                        sprite.hitArea = new PIXI.Rectangle(0, 0, 32, 32);
+                        sprite.name = "stone";
+                        viewport.addChild(sprite);
+                    }
+                }
+            }
+            for(var i = 0; i < points.length; i++ )
+            {
+                var sprite = new PIXI.Sprite.fromImage("../data/img/BlueDC.png");
+                sprite.position.x = points[i].x * 32; //igual aquí
+                sprite.position.y = points[i].y * 32; //igual aquí
+                sprite.name = "floor";
+                viewport.addChild(sprite);
+            }
+            playerSprite.x = 40;
+            playerSprite.y = 40;
+            exitPoint = locateExit();
+            let exitTex = PIXI.loader.resources["../data/img/Exit.png"].texture;
+            exitTex.frame = exitRects[0];
+            exitSprite = new PIXI.Sprite.from(exitTex);
+            exitSprite.x = exitPoint.x;
+            exitSprite.y = exitPoint.y;
+            exitSprite.name = "exit";
+            viewport.addChild(exitSprite);
+        }
+
+        function locateExit()
+        {
+            let exitPositionX = Math.floor(Math.random()*19);
+            let exitPositionY = Math.floor(Math.random()*19);
+            while( !(exitPositionX >= 9 && exitPositionY >= 9 && findPoint(new Punto(exitPositionX, exitPositionY), points)) )
+            {
+                exitPositionX = Math.floor(Math.random()*19);
+                exitPositionY = Math.floor(Math.random()*19);
+            }
+            return new Punto(exitPositionX*32, exitPositionY*32); //cambiar por 64
+        }
+    </script>
+</body>
+</html>

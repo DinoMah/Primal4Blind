@@ -1,0 +1,6 @@
+Para compilar, situate en la carpeta server/src/main en tu consola
+Ejecuta el comando: go build server.go
+Se generará un archivo server.exe
+Para ejecutarlo si usas cmd ejecuta "server"
+Si usas powershell ejecuta "./server"
+NOTA: CADA CAMBIO QUE HAGAS A ALGÚN ARCHIVO html, HAY QUE VOLVER A CORRER EL server.go PARA QUE IDENTIFIQUE EL CAMBIO
